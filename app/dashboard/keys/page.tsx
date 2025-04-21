@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { useSupabase } from '@/components/providers/supabase-provider';
+import { useSupabase } from '@/lib/providers/supabase-provider';
 import type { SecurityKey, KeyType } from '@/types/security-key';
 import { useKeysStore } from '@/lib/store/use-keys-store';
 

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useSupabase } from '@/components/providers/supabase-provider';
+import { useSupabase } from '@/lib/providers/supabase-provider';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');

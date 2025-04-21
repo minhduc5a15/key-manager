@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
-import { useSupabase } from '@/components/providers/supabase-provider';
+import { useSupabase } from '@/lib/providers/supabase-provider';
 import { useTheme } from 'next-themes';
 
 export default function SettingsPage() {

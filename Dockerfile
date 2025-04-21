@@ -9,6 +9,7 @@ RUN \
     elif [ -f package-lock.json ]; then npm ci; \
     elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
     elif [ -f bun.lock ]; then bun install; \
+    elif [ -f bun.lockb ]; then bun install; \
     else echo "Lockfile not found." && exit 1; \
     fi
 

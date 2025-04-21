@@ -16,6 +16,7 @@ export interface SecurityKey {
 }
 
 export interface CreateSecurityKeyDTO {
+    user_id: string;
     name: string;
     type: KeyType;
     description?: string;

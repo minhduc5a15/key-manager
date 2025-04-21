@@ -5,14 +5,13 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { SupabaseProvider } from '@/components/providers/supabase-provider';
+import { SupabaseProvider } from '@/lib/providers/supabase-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
     title: 'SecureVault - Manage Your Security Keys',
     description: 'Securely store and manage your passkeys, passwords, API keys, and other security credentials',
-    generator: 'v0.dev',
 };
 
 export default function RootLayout({

@@ -2,23 +2,30 @@
 
 import type React from 'react';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { create } from 'zustand';
 
-type SupabaseContext = {
+type SupabaseState = {
     supabase: SupabaseClient;
     user: User | null;
     loading: boolean;
+    setUser: (user: User | null) => void;
+    setLoading: (loading: boolean) => void;
 };
 
-const Context = createContext<SupabaseContext | undefined>(undefined);
+const useSupabaseStore = create<SupabaseState>((set) => ({
+    supabase: createClient(),
+    user: null,
+    loading: true,
+    setUser: (user) => set({ user }),
+    setLoading: (loading) => set({ loading }),
+}));
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-    const [supabase] = useState(() => createClient());
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { supabase, setUser, setLoading } = useSupabaseStore();
     const router = useRouter();
 
     useEffect(() => {
@@ -45,15 +52,12 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         return () => {
             subscription.unsubscribe();
         };
-    }, [supabase, router]);
+    }, [supabase, setUser, setLoading, router]);
 
-    return <Context.Provider value={{ supabase, user, loading }}>{children}</Context.Provider>;
+    return <>{children}</>;
 }
 
 export const useSupabase = () => {
-    const context = useContext(Context);
-    if (context === undefined) {
-        throw new Error('useSupabase must be used inside SupabaseProvider');
-    }
-    return context;
+    const { supabase, user, loading } = useSupabaseStore();
+    return { supabase, user, loading };
 };

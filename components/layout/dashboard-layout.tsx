@@ -8,9 +8,9 @@ import { usePathname } from 'next/navigation';
 import { Shield, Key, Settings, LogOut, Menu, X, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
-import { useSupabase } from '@/components/providers/supabase-provider';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
+import { useSupabase } from '@/lib/providers/supabase-provider';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;

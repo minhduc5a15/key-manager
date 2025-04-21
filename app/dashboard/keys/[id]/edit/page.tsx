@@ -3,7 +3,7 @@
 import type React from 'react';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,12 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { useSupabase } from '@/lib/providers/supabase-provider';
 import { useKeysStore } from '@/lib/store/use-keys-store';
-import type { CreateSecurityKeyDTO, KeyType } from '@/types/security-key';
+import { ArrowLeft } from 'lucide-react';
+import type { SecurityKey, KeyType, UpdateSecurityKeyDTO } from '@/types/security-key';
 
-export default function NewKeyPage() {
-    const { supabase, user } = useSupabase();
-    const [formData, setFormData] = useState<CreateSecurityKeyDTO>({
-        user_id: '',
+export default function EditKeyPage() {
+    const [key, setKey] = useState<SecurityKey | null>(null);
+    const [formData, setFormData] = useState<UpdateSecurityKeyDTO>({
+        id: '',
         name: '',
         type: 'password',
         description: '',
@@ -27,19 +28,54 @@ export default function NewKeyPage() {
         username: '',
         tags: [],
     });
-
-    // Set user_id when the component mounts
-    useEffect(() => {
-        if (user) {
-            setFormData((prev) => ({ ...prev, user_id: user.id }));
-        }
-        console.log('User:', user);
-    }, [user]);
     const [tagsInput, setTagsInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const { supabase } = useSupabase();
     const router = useRouter();
+    const params = useParams();
     const { toast } = useToast();
-    const { addKey } = useKeysStore();
+    const { updateKey } = useKeysStore();
+    const keyId = params.id as string;
+
+    useEffect(() => {
+        const fetchKey = async () => {
+            setIsLoading(true);
+            try {
+                const { data, error } = await supabase.from('security_keys').select('*').eq('id', keyId).single();
+
+                if (error) {
+                    throw error;
+                }
+
+                setKey(data as SecurityKey);
+                setFormData({
+                    id: data.id,
+                    name: data.name,
+                    type: data.type,
+                    description: data.description || '',
+                    value: data.value,
+                    url: data.url || '',
+                    username: data.username || '',
+                    tags: data.tags || [],
+                    expires_at: data.expires_at,
+                });
+            } catch (error: any) {
+                toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to fetch key details',
+                    variant: 'destructive',
+                });
+                router.push('/dashboard/keys');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (keyId) {
+            fetchKey();
+        }
+    }, [keyId, supabase, toast, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -77,43 +113,76 @@ export default function NewKeyPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
+        setIsSaving(true);
 
         try {
-            const { data, error } = await supabase.from('security_keys').insert(formData).select().single();
+            const { data, error } = await supabase
+                .from('security_keys')
+                .update({
+                    name: formData.name,
+                    type: formData.type,
+                    description: formData.description,
+                    value: formData.value,
+                    url: formData.url,
+                    username: formData.username,
+                    tags: formData.tags,
+                    expires_at: formData.expires_at,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', keyId)
+                .select()
+                .single();
 
             if (error) {
                 throw error;
             }
 
-            addKey(data);
+            updateKey(data as SecurityKey);
             toast({
-                title: 'Key created',
-                description: 'Your security key has been created successfully.',
+                title: 'Key updated',
+                description: 'Your security key has been updated successfully.',
             });
-            router.push('/dashboard/keys');
+            router.push(`/dashboard/keys/${keyId}`);
         } catch (error: any) {
             toast({
                 title: 'Error',
-                description: error.message || 'Failed to create key',
+                description: error.message || 'Failed to update key',
                 variant: 'destructive',
             });
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-8">
+                <p>Loading key details...</p>
+            </div>
+        );
+    }
+
+    if (!key) {
+        return (
+            <div className="flex justify-center py-8">
+                <p>Key not found</p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Add New Security Key</h1>
-                <p className="text-muted-foreground">Create a new security key to store in your vault</p>
+            <div className="flex items-center space-x-2">
+                <Button variant="outline" size="icon" onClick={() => router.push(`/dashboard/keys/${keyId}`)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-3xl font-bold tracking-tight">Edit Security Key</h1>
             </div>
             <Card>
                 <form onSubmit={handleSubmit}>
                     <CardHeader>
                         <CardTitle>Key Details</CardTitle>
-                        <CardDescription>Enter the details of your security key</CardDescription>
+                        <CardDescription>Update the details of your security key</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -183,11 +252,11 @@ export default function NewKeyPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                        <Button type="button" variant="outline" onClick={() => router.push('/dashboard/keys')}>
+                        <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/keys/${keyId}`)}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading ? 'Creating...' : 'Create Key'}
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </CardFooter>
                 </form>
